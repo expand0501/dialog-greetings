@@ -47,8 +47,8 @@ In `mod.json`, both readme titles + history, script header, both MCM text files 
 - Voiced Actor mods (actor voice) don't hook the dialog opening.
 
 ## Open items
-- 0.1.0 / 0.1.1 not tested in game (0.1.1: weapon warnings muted by default, Expand's request). Check: greeting on dialog open (normal stalker, Duty/Freedom base NPCs, a story NPC),
+- 1.0.0 released 2026-11-14 after Expand tested it in game (1.0.0 = version label only; 0.1.1: weapon warnings muted by default). Test list used: greeting on dialog open (normal stalker, Duty/Freedom base NPCs, a story NPC),
   subtitles, no greeting from traders/hostile/wounded/companions, cooldown after trade, chance 0, walking past is
   silent with mute on and vanilla with mute off, weapon warning muting, MCM live changes, debug lines in the log.
 - Possible: does the NPC's greeting overlap with the first line of a story dialog that plays its own voice?
-- No GitHub repository yet (ask Expand: public or private); not in the root README / SETUP tables yet.
+- GitHub: `expand0501/dialog-greetings` (public). Discord descriptions: `docs/discord_en.md`, `docs/discord_ru.md`.

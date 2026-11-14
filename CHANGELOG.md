@@ -1,5 +1,6 @@
 # Changelog - Dialog Greetings by Expand
 
+- 1.0.0: first public release. Version label only, no code changes.
 - 0.1.1: MCM "No weapon warnings when walking past" is now on by default (stalkers no longer tell you to put your
   weapon away or to stop when you walk up to them). A value already saved in MCM stays as it is.
 - 0.1.0: first version. When you open a dialog with a stalker he says one of his greeting lines (own sound section

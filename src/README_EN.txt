@@ -1,4 +1,4 @@
-Dialog Greetings 0.1.1 by Expand
+Dialog Greetings 1.0.0 by Expand
 Stalkers greet you when you start talking to them - not every time you walk past.
 For S.T.A.L.K.E.R. Anomaly / G.A.M.M.A.
 
@@ -46,6 +46,7 @@ No per-frame work: one check when a dialog opens and one table lookup when a sta
 starts a voice line.
 
 VERSION HISTORY
+1.0.0 - first public release (no code changes).
 0.1.1 - "No weapon warnings when walking past" is now on by default.
 0.1.0 - first version.
 
