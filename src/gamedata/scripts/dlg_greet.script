@@ -1,0 +1,191 @@
+-- Dialog Greetings 0.1.1 by Expand
+-- Stalkers say their greeting line when you open a dialog with them, and (MCM) no longer greet you
+-- when you just walk past them.
+--
+-- How it works
+--  * Dialog opens: pda.actor_menu_mode(10) stops the line the NPC is saying, stores his id in
+--    GetEvent("used_npc_id") and calls Register_UI("Dialog"), which sends GUI_on_show("Dialog").
+--    There we play our own sound theme [dlg_greet_hello] (configs\misc\sound\script_sound_dlg_greet.ltx):
+--    the same voice files as vanilla [meet_hello], but with play_always and no cooldown. Vanilla
+--    [meet_hello] shares one 7-10 s cooldown between ALL stalkers, so it would often stay silent.
+--  * Walking past: the meet scheme (xr_meet.script) plays "meet_hello" through xr_sound.set_sound_play
+--    when you come within 3 m. We wrap set_sound_play and drop that theme (MCM mute_hello), and
+--    optionally the weapon warnings meet_wait / meet_hide_weapon / meet_stop (MCM mute_warnings).
+--  * No per-frame work: one callback when a dialog opens, one table lookup per NPC sound request.
+--  * Nothing is saved. The theme state is saved by xr_sound by section name, so removing the mod is safe.
+
+local random = math.random
+local sformat = string.format
+
+local TAG   = "[DialogGreetings]"
+local THEME = "dlg_greet_hello"   -- section in script_sound_dlg_greet.ltx
+
+-- themes dropped by the walking-past filter
+local HELLO_THEMES   = { meet_hello = true }
+local WARNING_THEMES = { meet_wait = true, meet_hide_weapon = true, meet_stop = true }
+
+-- settings changed by MCM (dlg_greet_mcm.script); these are the defaults without MCM
+local DEFAULTS = {
+	enabled       = true,   -- greet when a dialog opens
+	chance        = 100,    -- % chance of a greeting
+	cooldown      = 60,     -- seconds before the same stalker greets you again (0 = every time)
+	companions    = false,  -- companions greet too
+	mute_hello    = true,   -- no greeting when you walk past
+	mute_warnings = true,   -- no weapon warnings when you walk past
+	debug         = false,
+}
+
+local ENABLED       = DEFAULTS.enabled
+local CHANCE        = DEFAULTS.chance
+local COOLDOWN_MS   = DEFAULTS.cooldown * 1000
+local COMPANIONS    = DEFAULTS.companions
+local MUTE_HELLO    = DEFAULTS.mute_hello
+local MUTE_WARNINGS = DEFAULTS.mute_warnings
+local DEBUG         = DEFAULTS.debug
+
+local last_greet = {}          -- npc id -> time_global() of his last dialog greeting (this session only)
+local orig_set_sound_play      -- xr_sound.set_sound_play before our wrapper; nil = not installed
+local theme_error_logged = false
+
+local function dbg(fmt, ...)
+	if DEBUG then
+		printf("%s %s", TAG, sformat(fmt, ...))
+	end
+end
+
+---------------------------------------------------------------------------------------------------
+-- Settings
+---------------------------------------------------------------------------------------------------
+local function mcm(key)
+	local v = ui_mcm and ui_mcm.get and ui_mcm.get("dlg_greet/" .. key)
+	if v == nil then return DEFAULTS[key] end
+	return v
+end
+
+local function clamp(v, lo, hi, def)
+	v = tonumber(v)
+	if not v then return def end
+	if v < lo then return lo end
+	if v > hi then return hi end
+	return v
+end
+
+local function load_settings()
+	ENABLED       = mcm("enabled") and true or false
+	CHANCE        = clamp(mcm("chance"), 0, 100, DEFAULTS.chance)
+	COOLDOWN_MS   = clamp(mcm("cooldown"), 0, 600, DEFAULTS.cooldown) * 1000
+	COMPANIONS    = mcm("companions") and true or false
+	MUTE_HELLO    = mcm("mute_hello") and true or false
+	MUTE_WARNINGS = mcm("mute_warnings") and true or false
+	DEBUG         = mcm("debug") and true or false
+end
+
+---------------------------------------------------------------------------------------------------
+-- Walking past: filter for xr_sound.set_sound_play
+---------------------------------------------------------------------------------------------------
+local function set_sound_play_filtered(npc_id, sound, ...)
+	if sound and ((MUTE_HELLO and HELLO_THEMES[sound]) or (MUTE_WARNINGS and WARNING_THEMES[sound])) then
+		dbg("muted walking-past sound %s (npc %s)", sound, tostring(npc_id))
+		return nil
+	end
+	return orig_set_sound_play(npc_id, sound, ...)
+end
+
+local function install_filter()
+	if orig_set_sound_play then return end   -- already installed in this session
+	local xs = xr_sound
+	local f = xs and xs.set_sound_play
+	if type(f) ~= "function" then
+		printf("%s xr_sound.set_sound_play not found, walking-past muting is off", TAG)
+		return
+	end
+	orig_set_sound_play = f
+	xs.set_sound_play = set_sound_play_filtered
+end
+
+---------------------------------------------------------------------------------------------------
+-- Dialog opens
+---------------------------------------------------------------------------------------------------
+local function greet(npc_id)
+	local actor = db.actor
+	if not (actor and actor:alive()) then return end
+
+	local st = db.storage[npc_id]
+	local npc = st and st.object
+	if not (npc and npc_id ~= AC_ID and IsStalker(npc) and npc:alive()) then return end
+
+	if npc:relation(actor) == game_object.enemy then
+		dbg("npc %s is hostile, no greeting", npc_id)
+		return
+	end
+	if (not COMPANIONS) and npc:has_info("npcx_is_companion") then
+		dbg("npc %s is a companion, no greeting", npc_id)
+		return
+	end
+	if xr_wounded and xr_wounded.is_wounded and xr_wounded.is_wounded(npc) then
+		dbg("npc %s is wounded, no greeting", npc_id)
+		return
+	end
+
+	local now = time_global()
+	local last = last_greet[npc_id]
+	if last and COOLDOWN_MS > 0 and now - last < COOLDOWN_MS then
+		dbg("npc %s greeted %s ms ago, no greeting", npc_id, now - last)
+		return
+	end
+	if CHANCE < 100 and random(100) > CHANCE then
+		last_greet[npc_id] = now
+		dbg("npc %s: chance roll failed", npc_id)
+		return
+	end
+
+	local themes = sound_theme and sound_theme.theme
+	local theme = themes and themes[THEME]
+	if not theme then
+		if not theme_error_logged then
+			theme_error_logged = true
+			printf("%s sound theme [%s] is not loaded (configs\\misc\\sound\\script_sound_dlg_greet.ltx missing?)", TAG, THEME)
+		end
+		return
+	end
+	-- the theme only knows NPCs whose community and voice set have meet_hello files (no traders etc.)
+	if not (theme.npc and theme.npc[npc_id]) then
+		dbg("npc %s (%s) has no greeting voice set", npc_id, npc:section())
+		return
+	end
+
+	last_greet[npc_id] = now
+	xr_sound.set_sound_play(npc_id, THEME)
+	dbg("npc %s (%s) greets", npc_id, npc:name())
+end
+
+local function on_gui_show(name)
+	if name ~= "Dialog" or not ENABLED then return end
+	local id = GetEvent and GetEvent("used_npc_id")
+	if type(id) ~= "number" then
+		dbg("dialog opened, no NPC id")
+		return
+	end
+	greet(id)
+end
+
+---------------------------------------------------------------------------------------------------
+-- Callbacks
+---------------------------------------------------------------------------------------------------
+local function reset_state()
+	last_greet = {}
+end
+
+local function on_first_update()
+	reset_state()
+	load_settings()
+end
+
+function on_game_start()
+	load_settings()
+	install_filter()
+	RegisterScriptCallback("GUI_on_show", on_gui_show)
+	RegisterScriptCallback("actor_on_first_update", on_first_update)
+	RegisterScriptCallback("actor_on_net_destroy", reset_state)
+	RegisterScriptCallback("on_option_change", load_settings)
+end

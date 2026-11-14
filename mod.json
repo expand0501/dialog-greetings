@@ -1,0 +1,12 @@
+{
+  "name": "Dialog Greetings",
+  "version": "0.1.1",
+  "zip": "Dialog_Greetings_by_Expand_{version}",
+  "versionFiles": [
+    "src/README_EN.txt",
+    "src/README_RU.txt",
+    "src/gamedata/scripts/dlg_greet.script",
+    "src/gamedata/configs/text/eng/ui_st_dlg_greet_mcm.xml",
+    "src/gamedata/configs/text/rus/ui_st_dlg_greet_mcm.xml"
+  ]
+}

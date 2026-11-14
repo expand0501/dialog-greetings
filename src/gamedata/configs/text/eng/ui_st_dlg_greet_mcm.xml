@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- Dialog Greetings 0.1.1 by Expand -->
+<string_table>
+	<string id="ui_mcm_menu_dlg_greet">
+		<text>Dialog Greetings</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_title">
+		<text>Dialog Greetings</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_credits">
+		<text>Dialog Greetings by Expand. Stalkers greet you when you start talking to them, not every time you walk past.</text>
+	</string>
+
+	<string id="ui_mcm_dlg_greet_hdr_dialog">
+		<text>When a dialog opens</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_enabled">
+		<text>Greet when a dialog opens</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_enabled_desc">
+		<text>The stalker says one of his greeting lines ("Hello", "Hi there"...) when you open a dialog with him. Hostile and wounded stalkers stay silent, and so do traders and others without greeting voice lines.</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_chance">
+		<text>Greeting chance (%)</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_chance_desc">
+		<text>Chance that the stalker greets you when the dialog opens. 100 = always, lower = he sometimes just starts talking.</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_cooldown">
+		<text>Greet the same stalker again after (seconds)</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_cooldown_desc">
+		<text>How long the same stalker stays silent after greeting you, so reopening a dialog (for example after trading) doesn't repeat the greeting. 0 = greets every time a dialog opens.</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_companions">
+		<text>Companions greet too</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_companions_desc">
+		<text>Your companions also greet you when you open a dialog with them. Off by default, because you talk to companions often to give orders.</text>
+	</string>
+
+	<string id="ui_mcm_dlg_greet_hdr_pass">
+		<text>When you walk past</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_mute_hello">
+		<text>No greeting when walking past</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_mute_hello_desc">
+		<text>Stalkers no longer say hello every time you come within 3 m of them. Turn off to hear the vanilla greetings again (then a stalker may greet you twice: when you walk up and when the dialog opens).</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_mute_warnings">
+		<text>No weapon warnings when walking past</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_mute_warnings_desc">
+		<text>Stalkers also stop telling you to put your weapon away or to stop when you walk up to them with a weapon in your hands. They still react to you as usual; only the voice line is skipped.</text>
+	</string>
+
+	<string id="ui_mcm_dlg_greet_hdr_misc">
+		<text>Other</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_debug">
+		<text>Debug log</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_debug_desc">
+		<text>Writes [DialogGreetings] lines to the game log (xray_*.log): every greeting, every muted line and why a stalker stayed silent. Only for bug reports.</text>
+	</string>
+</string_table>

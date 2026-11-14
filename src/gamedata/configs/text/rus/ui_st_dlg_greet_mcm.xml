@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- Dialog Greetings 0.1.1 by Expand -->
+<string_table>
+	<string id="ui_mcm_menu_dlg_greet">
+		<text>Приветствия в диалоге</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_title">
+		<text>Приветствия в диалоге</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_credits">
+		<text>Dialog Greetings от Expand. Сталкеры здороваются, когда вы начинаете с ними разговор, а не каждый раз, когда вы проходите мимо.</text>
+	</string>
+
+	<string id="ui_mcm_dlg_greet_hdr_dialog">
+		<text>При открытии диалога</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_enabled">
+		<text>Приветствие при открытии диалога</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_enabled_desc">
+		<text>Сталкер говорит одну из своих фраз приветствия ("Привет", "Здорово"...), когда вы открываете с ним диалог. Враждебные и раненые сталкеры молчат, как и торговцы и другие персонажи без озвученных приветствий.</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_chance">
+		<text>Шанс приветствия (%)</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_chance_desc">
+		<text>Шанс, что сталкер поздоровается при открытии диалога. 100 = всегда, меньше = иногда он сразу переходит к разговору.</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_cooldown">
+		<text>Повторное приветствие того же сталкера через (сек)</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_cooldown_desc">
+		<text>Сколько секунд тот же сталкер не здоровается снова, чтобы повторное открытие диалога (например, после торговли) не повторяло приветствие. 0 = здоровается при каждом открытии диалога.</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_companions">
+		<text>Компаньоны тоже здороваются</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_companions_desc">
+		<text>Ваши компаньоны тоже здороваются, когда вы открываете с ними диалог. По умолчанию выключено: с компаньонами часто говорят, чтобы отдать приказ.</text>
+	</string>
+
+	<string id="ui_mcm_dlg_greet_hdr_pass">
+		<text>Когда вы проходите мимо</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_mute_hello">
+		<text>Без приветствия, когда проходите мимо</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_mute_hello_desc">
+		<text>Сталкеры больше не здороваются каждый раз, когда вы подходите к ним ближе 3 м. Выключите, чтобы вернуть обычные приветствия (тогда сталкер может поздороваться дважды: когда вы подходите и когда открывается диалог).</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_mute_warnings">
+		<text>Без предупреждений об оружии, когда проходите мимо</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_mute_warnings_desc">
+		<text>Сталкеры также перестают требовать убрать оружие или остановиться, когда вы подходите к ним с оружием в руках. Реагируют они как обычно, пропускается только фраза.</text>
+	</string>
+
+	<string id="ui_mcm_dlg_greet_hdr_misc">
+		<text>Прочее</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_debug">
+		<text>Отладочный лог</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_debug_desc">
+		<text>Пишет строки [DialogGreetings] в лог игры (xray_*.log): каждое приветствие, каждую заглушённую фразу и почему сталкер промолчал. Только для отчётов об ошибках.</text>
+	</string>
+</string_table>

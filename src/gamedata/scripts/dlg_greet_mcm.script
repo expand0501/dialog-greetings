@@ -1,0 +1,23 @@
+-- MCM menu for Dialog Greetings by Expand
+-- Defaults must match DEFAULTS in dlg_greet.script (used when MCM is not installed).
+function on_mcm_load()
+	return {
+		id = "dlg_greet", sh = true, gr = {
+			{ id = "title", type = "slide", link = "ui_options_slider_player", text = "ui_mcm_dlg_greet_title", size = {512, 50}, spacing = 20 },
+			{ id = "credits", type = "desc", text = "ui_mcm_dlg_greet_credits" },
+
+			{ id = "hdr_dialog", type = "title", text = "ui_mcm_dlg_greet_hdr_dialog", align = "l", clr = {255, 200, 200, 200} },
+			{ id = "enabled", type = "check", val = 1, def = true },
+			{ id = "chance", type = "track", val = 2, min = 0, max = 100, step = 5, def = 100 },
+			{ id = "cooldown", type = "track", val = 2, min = 0, max = 600, step = 10, def = 60 },
+			{ id = "companions", type = "check", val = 1, def = false },
+
+			{ id = "hdr_pass", type = "title", text = "ui_mcm_dlg_greet_hdr_pass", align = "l", clr = {255, 200, 200, 200} },
+			{ id = "mute_hello", type = "check", val = 1, def = true },
+			{ id = "mute_warnings", type = "check", val = 1, def = true },
+
+			{ id = "hdr_misc", type = "title", text = "ui_mcm_dlg_greet_hdr_misc", align = "l", clr = {255, 200, 200, 200} },
+			{ id = "debug", type = "check", val = 1, def = false },
+		}
+	}
+end

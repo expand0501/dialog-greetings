@@ -1,0 +1,15 @@
+; Dialog Greetings by Expand
+; Greeting a stalker says when you open a dialog with him (played by dlg_greet.script).
+; Same voice files and communities as vanilla [meet_hello], but:
+;   play_always = true - stops the line he is saying and plays the greeting
+;   idle = 0,0,100     - no cooldown (vanilla meet_hello has one 7-10 s cooldown shared by all stalkers)
+; Included automatically by misc\sound\script_sound.ltx (#include "script_sound_*.ltx").
+
+[dlg_greet_hello]
+type = npc
+avail_communities = bandit, csky, dolg, ecolog, freedom, killer, army, stalker, monolith, greh, greh_npc, army_npc, isg, renegade
+npc_prefix = true
+path = states\meet\meet_hello_
+shuffle = rnd
+idle = 0,0,100
+play_always = true
