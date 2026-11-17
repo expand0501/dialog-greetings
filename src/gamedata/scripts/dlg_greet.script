@@ -1,4 +1,4 @@
--- Dialog Greetings 1.0.4 by Expand
+-- Dialog Greetings 1.0.5 by Expand
 -- Stalkers say their greeting line when you open a dialog with them, and (MCM) no longer greet you
 -- when you just walk past them.
 --
@@ -314,6 +314,44 @@ local function install_filter()
 end
 
 ---------------------------------------------------------------------------------------------------
+-- Public API for other mods
+---------------------------------------------------------------------------------------------------
+-- dlg_greet.add_greeting_provider(fn): fn(npc, npc_id) returns the name of a loaded sound theme that
+-- npc should play as his dialog greeting instead of [dlg_greet_hello], or nil to leave him to us.
+-- All our checks (hostile, wounded, companion, cooldown, chance) still run first. The theme should
+-- have play_always = true, or the line is refused while he is saying another one.
+local greeting_providers = {}
+
+function add_greeting_provider(fn)
+	if type(fn) ~= "function" then return end
+	for i = 1, #greeting_providers do
+		if greeting_providers[i] == fn then return end
+	end
+	greeting_providers[#greeting_providers+1] = fn
+end
+
+-- dlg_greet.walk_hello_muted(): true when walking-past greetings (meet_hello) are muted by us.
+function walk_hello_muted()
+	return MUTE_HELLO
+end
+
+local function provided_theme(npc, npc_id)
+	local themes = sound_theme and sound_theme.theme
+	for i = 1, #greeting_providers do
+		-- a broken provider must not stop the greeting of other NPCs
+		local ok, name = pcall(greeting_providers[i], npc, npc_id)
+		if not ok then
+			printf("%s greeting provider error: %s", TAG, tostring(name))
+		elseif name and themes and themes[name] then
+			return name
+		elseif name then
+			dbg("provider gave unknown sound theme %s for npc %s", tostring(name), npc_id)
+		end
+	end
+	return nil
+end
+
+---------------------------------------------------------------------------------------------------
 -- Dialog opens
 ---------------------------------------------------------------------------------------------------
 local function greet(npc_id)
@@ -358,15 +396,20 @@ local function greet(npc_id)
 		end
 		return
 	end
-	-- the theme only knows NPCs whose community and voice set have meet_hello files (no traders etc.)
-	if not (theme.npc and theme.npc[npc_id]) then
-		dbg("npc %s (%s) has no greeting voice set", npc_id, npc:section())
-		return
+	-- another mod may give this NPC a different greeting line (e.g. Monolith Voice Greetings)
+	local play_theme = provided_theme(npc, npc_id)
+	if not play_theme then
+		-- the theme only knows NPCs whose community and voice set have meet_hello files (no traders etc.)
+		if not (theme.npc and theme.npc[npc_id]) then
+			dbg("npc %s (%s) has no greeting voice set", npc_id, npc:section())
+			return
+		end
+		play_theme = THEME
 	end
 
 	last_greet[npc_id] = now
-	xr_sound.set_sound_play(npc_id, THEME)
-	dbg("npc %s (%s) greets", npc_id, npc:name())
+	xr_sound.set_sound_play(npc_id, play_theme)
+	dbg("npc %s (%s) greets with %s", npc_id, npc:name(), play_theme)
 end
 
 -- The NPC the actor is talking to. pda.actor_menu_mode(10) fills used_npc_id with the first NPC in

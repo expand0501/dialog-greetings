@@ -1,4 +1,4 @@
-Dialog Greetings 1.0.4 by Expand
+Dialog Greetings 1.0.5 by Expand
 Stalkers greet you when you start talking to them - not every time you walk past.
 For S.T.A.L.K.E.R. Anomaly / G.A.M.M.A.
 
@@ -48,11 +48,18 @@ COMPATIBILITY
   the Duty guard on the hangar catwalk), whose line played every time you passed them.
   The Rostok informant keeps his line, but says it only once per visit.
 
+FOR MOD AUTHORS
+- dlg_greet.add_greeting_provider(fn): fn(npc, npc_id) returns the name of a sound theme
+  the stalker plays as his dialog greeting (or nil). Use play_always = true in that theme.
+- dlg_greet.walk_hello_muted(): true when walking-past greetings are muted.
+
 PERFORMANCE
 No per-frame work: one check when a dialog opens and one table lookup when a stalker
 starts a voice line.
 
 VERSION HISTORY
+1.0.5 - Other mods can now give a stalker a different dialog greeting line (used by
+        Monolith Voice Greetings). Nothing changes without such a mod.
 1.0.4 - New MCM option "No reaction to a raised weapon" (off by default): stalkers don't
         aim at you or stop you when your weapon is drawn. Applies at once to stalkers nearby.
 1.0.3 - Fixed: opening a dialog sometimes played the greeting of another stalker nearby.

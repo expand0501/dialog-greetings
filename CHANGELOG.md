@@ -1,5 +1,9 @@
 # Changelog - Dialog Greetings by Expand
 
+- 1.0.5: public API for other mods: `dlg_greet.add_greeting_provider(fn)` (fn(npc, npc_id) returns a sound theme
+  the NPC plays as his dialog greeting instead of `dlg_greet_hello`; all our checks run first) and
+  `dlg_greet.walk_hello_muted()`. Used by Monolith Voice Greetings, so Monolith stalkers (silent greeting files)
+  greet with other factions' lines. No change for players without such a mod.
 - 1.0.4: new MCM option "No reaction to a raised weapon" (`no_weapon_reaction`, off by default). Wraps
   `xr_meet.init_meet` once; for meet fields the NPC's own meet section doesn't set (the default meet of generic
   stalkers), the parsed condlists get a copy with `=actor_has_weapon` treated as false: no `threat_na` aiming, no

@@ -70,6 +70,10 @@ In `mod.json`, both readme titles + history, script header, both MCM text files 
 - Save safety: Anomaly saves through marshal (`USE_MARSHAL`), `xr_sound.actor_save_state` stores theme state by
   section name, so adding/removing a theme is safe. The mod saves nothing; `last_greet` (per-NPC cooldown) lives
   for the session and is cleared on first update / net destroy.
+- Public API (1.0.5, for Monolith Voice Greetings): `add_greeting_provider(fn)`; in `greet()`, after all checks,
+  providers are asked (pcall, a broken one logs once per call) for a loaded theme name; that theme replaces
+  `dlg_greet_hello` and skips our own `theme.npc` check. `walk_hello_muted()` returns `MUTE_HELLO`. Keep both
+  stable: other mods call them.
 - Checks before greeting: actor alive, NPC stalker and alive, not hostile (`npc:relation(actor)`), not companion
   (`npcx_is_companion`, MCM), not wounded (`xr_wounded.is_wounded`), cooldown, chance.
 
