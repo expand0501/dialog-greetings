@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="windows-1251"?>
-<!-- Dialog Greetings 1.0.0 by Expand -->
+<!-- Dialog Greetings 1.0.4 by Expand -->
 <string_table>
 	<string id="ui_mcm_menu_dlg_greet">
 		<text>Dialog Greetings</text>
@@ -54,6 +54,12 @@
 	<string id="ui_mcm_dlg_greet_mute_warnings_desc">
 		<text>Stalkers also stop telling you to put your weapon away or to stop when you walk up to them with a weapon in your hands. They still react to you as usual; only the voice line is skipped.</text>
 	</string>
+	<string id="ui_mcm_dlg_greet_no_weapon_reaction">
+		<text>No reaction to a raised weapon</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_no_weapon_reaction_desc">
+		<text>Stalkers no longer aim at you, stop you or block the talk animation when you walk up to them with a weapon in your hands; they react as if your weapon were lowered. Story characters with their own rules (base checkpoints, guards) still react. Applies at once to stalkers nearby.</text>
+	</string>
 
 	<string id="ui_mcm_dlg_greet_hdr_misc">
 		<text>Other</text>
@@ -62,6 +68,6 @@
 		<text>Debug log</text>
 	</string>
 	<string id="ui_mcm_dlg_greet_debug_desc">
-		<text>Writes [DialogGreetings] lines to the game log (xray_*.log): every greeting, every muted line and why a stalker stayed silent. Only for bug reports.</text>
+		<text>Writes [DialogGreetings] lines to the game log (xray_*.log): every greeting, every muted line, why a stalker stayed silent, and the sound name of every voice line a stalker within 20 m starts. Only for bug reports.</text>
 	</string>
 </string_table>

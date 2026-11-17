@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="windows-1251"?>
-<!-- Dialog Greetings 1.0.0 by Expand -->
+<!-- Dialog Greetings 1.0.4 by Expand -->
 <string_table>
 	<string id="ui_mcm_menu_dlg_greet">
 		<text>Приветствия в диалоге</text>
@@ -54,6 +54,12 @@
 	<string id="ui_mcm_dlg_greet_mute_warnings_desc">
 		<text>Сталкеры также перестают требовать убрать оружие или остановиться, когда вы подходите к ним с оружием в руках. Реагируют они как обычно, пропускается только фраза.</text>
 	</string>
+	<string id="ui_mcm_dlg_greet_no_weapon_reaction">
+		<text>Без реакции на оружие в руках</text>
+	</string>
+	<string id="ui_mcm_dlg_greet_no_weapon_reaction_desc">
+		<text>Сталкеры больше не целятся в вас, не останавливают вас и не прерывают анимацию разговора, когда вы подходите к ним с оружием в руках: они ведут себя так, будто оружие опущено. Сюжетные персонажи со своими правилами (блокпосты баз, охрана) по-прежнему реагируют. Применяется сразу к сталкерам рядом.</text>
+	</string>
 
 	<string id="ui_mcm_dlg_greet_hdr_misc">
 		<text>Прочее</text>
@@ -62,6 +68,6 @@
 		<text>Отладочный лог</text>
 	</string>
 	<string id="ui_mcm_dlg_greet_debug_desc">
-		<text>Пишет строки [DialogGreetings] в лог игры (xray_*.log): каждое приветствие, каждую заглушённую фразу и почему сталкер промолчал. Только для отчётов об ошибках.</text>
+		<text>Пишет строки [DialogGreetings] в лог игры (xray_*.log): каждое приветствие, каждую заглушённую фразу, почему сталкер промолчал, и имя звука каждой фразы, которую начинает сталкер в радиусе 20 м. Только для отчётов об ошибках.</text>
 	</string>
 </string_table>

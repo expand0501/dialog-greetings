@@ -11,6 +11,7 @@ Stalkers greet you when you start talking to them, not every time you walk past.
 - Opening a dialog with a stalker makes him say one of his own greeting lines, in his voice and with subtitles.
 - Optional (on by default): no more "hello" every time you walk within 3 m of a stalker.
 - Optional (on by default): no "put your weapon away" / "stop" lines when you walk up with a weapon drawn.
+- Optional (off by default): stalkers don't react to your raised weapon at all (no aiming at you, no stopping you); story guards keep their rules.
 - Hostile, wounded and voiceless characters (traders) stay silent; companions only if you want (MCM).
 - Per-stalker cooldown (default 60 s) and greeting chance in MCM.
 - No replaced game scripts, no per-frame work, safe to add or remove mid-playthrough.
@@ -52,6 +53,7 @@ do not use it commercially and keep the same license.
 - При открытии диалога сталкер говорит одну из своих фраз приветствия своим голосом и с субтитрами.
 - По желанию (включено по умолчанию): больше никаких "привет" каждый раз, когда вы проходите ближе 3 м от сталкера.
 - По желанию (включено по умолчанию): никаких "убери оружие" / "стоять", когда вы подходите с оружием в руках.
+- По желанию (выключено по умолчанию): сталкеры вообще не реагируют на оружие в руках (не целятся, не останавливают); сюжетная охрана работает как раньше.
 - Враждебные, раненые и неозвученные персонажи (торговцы) молчат; компаньоны — только если включить (MCM).
 - Задержка повторного приветствия для каждого сталкера (по умолчанию 60 с) и шанс приветствия в MCM.
 - Не заменяет скрипты игры, ничего не делает каждый кадр, можно ставить и удалять посреди прохождения.

@@ -15,6 +15,7 @@ function on_mcm_load()
 			{ id = "hdr_pass", type = "title", text = "ui_mcm_dlg_greet_hdr_pass", align = "l", clr = {255, 200, 200, 200} },
 			{ id = "mute_hello", type = "check", val = 1, def = true },
 			{ id = "mute_warnings", type = "check", val = 1, def = true },
+			{ id = "no_weapon_reaction", type = "check", val = 1, def = false },
 
 			{ id = "hdr_misc", type = "title", text = "ui_mcm_dlg_greet_hdr_misc", align = "l", clr = {255, 200, 200, 200} },
 			{ id = "debug", type = "check", val = 1, def = false },

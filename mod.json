@@ -1,6 +1,6 @@
 {
   "name": "Dialog Greetings",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "zip": "Dialog_Greetings_by_Expand_{version}",
   "versionFiles": [
     "src/README_EN.txt",

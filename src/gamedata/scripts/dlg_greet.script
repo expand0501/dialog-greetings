@@ -1,16 +1,22 @@
--- Dialog Greetings 1.0.0 by Expand
+-- Dialog Greetings 1.0.4 by Expand
 -- Stalkers say their greeting line when you open a dialog with them, and (MCM) no longer greet you
 -- when you just walk past them.
 --
 -- How it works
 --  * Dialog opens: pda.actor_menu_mode(10) stops the line the NPC is saying, stores his id in
 --    GetEvent("used_npc_id") and calls Register_UI("Dialog"), which sends GUI_on_show("Dialog").
---    There we play our own sound theme [dlg_greet_hello] (configs\misc\sound\script_sound_dlg_greet.ltx):
+--    pda picks the first NPC in db.storage whose is_talking() is true, which can be another NPC, so we
+--    ask the engine for the real dialog partner (actor:get_talking_npc(), modded exes) and use
+--    used_npc_id only as a fallback. There we play our own sound theme [dlg_greet_hello] (configs\misc\sound\script_sound_dlg_greet.ltx):
 --    the same voice files as vanilla [meet_hello], but with play_always and no cooldown. Vanilla
 --    [meet_hello] shares one 7-10 s cooldown between ALL stalkers, so it would often stay silent.
 --  * Walking past: the meet scheme (xr_meet.script) plays "meet_hello" through xr_sound.set_sound_play
 --    when you come within 3 m. We wrap set_sound_play and drop that theme (MCM mute_hello), and
 --    optionally the weapon warnings meet_wait / meet_hide_weapon / meet_stop (MCM mute_warnings).
+--    Story NPCs with their own walking-past line (meet close_snd_hello, or a logic effect
+--    %=play_sound(theme)% when you enter a zone; both end in set_sound_play) are listed by theme name
+--    in HELLO_THEMES, e.g. the Rostok guards (vanilla script_sound_l05_bar.ltx). Lines in ONCE_THEMES
+--    play only once per level visit (e.g. the Rostok informant), then they are muted until the next load.
 --  * No per-frame work: one callback when a dialog opens, one table lookup per NPC sound request.
 --  * Nothing is saved. The theme state is saved by xr_sound by section name, so removing the mod is safe.
 
@@ -21,8 +27,23 @@ local TAG   = "[DialogGreetings]"
 local THEME = "dlg_greet_hello"   -- section in script_sound_dlg_greet.ltx
 
 -- themes dropped by the walking-past filter
-local HELLO_THEMES   = { meet_hello = true }
+local HELLO_THEMES   = {
+	meet_hello        = true,
+	-- Rostok guards: their line plays every time you come back within range
+	bar_guard_prohodi = true,   -- Zhorik on the stairs to the bar, meet close_snd_hello (5 m, no dialog)
+	bar_guard_stop    = true,   -- Garik at the bar door, "stop", meet close_snd_hello (2 m, no dialog)
+	-- Duty zoneguard on the hangar catwalk, "go your way, stalker": bar_dolg_general_logic.ltx
+	-- on_actor_in_zone = bar_angar_warn_zone | %=play_sound(...)%, repeats every 16-25 s while you are there
+	bar_dolg_hangar_bridge_hello = true,
+}
 local WARNING_THEMES = { meet_wait = true, meet_hide_weapon = true, meet_stop = true }
+-- walking-past lines that play once per level visit (with mute_hello on), then stay muted until the
+-- level is loaded again (level change or save load)
+local ONCE_THEMES = {
+	-- Rostok informant (bar_informator_mlr, "Informant"): bar_visitors_other_logic.ltx [meet_inf]
+	-- close_snd_hello, 3 m, repeats every 100 s (script_sound_mlr.ltx)
+	bar_informer_1_mlr = true,
+}
 
 -- settings changed by MCM (dlg_greet_mcm.script); these are the defaults without MCM
 local DEFAULTS = {
@@ -32,6 +53,7 @@ local DEFAULTS = {
 	companions    = false,  -- companions greet too
 	mute_hello    = true,   -- no greeting when you walk past
 	mute_warnings = true,   -- no weapon warnings when you walk past
+	no_weapon_reaction = false, -- stalkers don't raise their gun / stop you when your weapon is drawn
 	debug         = false,
 }
 
@@ -41,9 +63,12 @@ local COOLDOWN_MS   = DEFAULTS.cooldown * 1000
 local COMPANIONS    = DEFAULTS.companions
 local MUTE_HELLO    = DEFAULTS.mute_hello
 local MUTE_WARNINGS = DEFAULTS.mute_warnings
+local NO_WEAPON_REACTION = DEFAULTS.no_weapon_reaction
 local DEBUG         = DEFAULTS.debug
 
 local last_greet = {}          -- npc id -> time_global() of his last dialog greeting (this session only)
+local once_played = {}         -- npc id -> { [theme] = true } for ONCE_THEMES lines played this level visit
+local get_talking_npc_ok       -- nil = not checked yet; true/false = engine has actor:get_talking_npc()
 local orig_set_sound_play      -- xr_sound.set_sound_play before our wrapper; nil = not installed
 local theme_error_logged = false
 
@@ -77,16 +102,201 @@ local function load_settings()
 	COMPANIONS    = mcm("companions") and true or false
 	MUTE_HELLO    = mcm("mute_hello") and true or false
 	MUTE_WARNINGS = mcm("mute_warnings") and true or false
+	NO_WEAPON_REACTION = mcm("no_weapon_reaction") and true or false
 	DEBUG         = mcm("debug") and true or false
+end
+
+---------------------------------------------------------------------------------------------------
+-- Raised weapon: the meet scheme's weapon reaction
+---------------------------------------------------------------------------------------------------
+-- xr_meet's default meet (all generic stalkers) checks =actor_has_weapon (weapon in hands, not lowered,
+-- first meet) to make the stalker raise his gun at you (far_anim threat_na), stop you (bigger meet
+-- distances, no talk animation) and say meet_hide_weapon / meet_stop. With the option on we give the
+-- stalker the same condlists with that check treated as false, as if your weapon were lowered.
+-- Only fields the NPC's own meet section doesn't set are changed, so story NPCs with their own
+-- weapon logic (Bar checkpoint, bunker guards...) keep it. Originals are kept, so the option can be
+-- switched live: on_option_change re-applies it to every online NPC.
+local MEET_FIELDS = { "close_distance", "close_anim", "close_snd_hello", "far_distance", "far_anim", "far_snd" }
+local WEAPON_COND = "actor_has_weapon"
+local COND_EQ, COND_NEG = 3, 4               -- xr_logic.extract_conditions: '=' and '!' checks
+
+local orig_init_meet                         -- xr_meet.init_meet before our wrapper; nil = not installed
+local filtered_of = setmetatable({}, { __mode = "k" })  -- original condlist -> filtered (or false = no change)
+local original_of = setmetatable({}, { __mode = "k" })  -- filtered condlist -> original
+local meet_records = setmetatable({}, { __mode = "k" }) -- meet storage st -> { field = original condlist }
+
+-- Copy of a parsed condlist (xr_logic.parse_condlist format: { {result, checks, effects}, ... }) with
+-- =actor_has_weapon treated as false: entries needing it are dropped, !actor_has_weapon checks removed.
+-- Parsed condlists are memoized and shared by many NPCs, so the original is never changed.
+-- Returns nil when the condlist has no weapon check.
+local function filter_condlist(list)
+	local cached = filtered_of[list]
+	if cached ~= nil then return cached or nil end
+	local out, changed = {}, false
+	for i = 1, #list do
+		local cond = list[i]
+		local checks = cond[2]
+		local keep, new_checks = true, checks
+		if checks then
+			for j = 1, #checks do
+				local c = checks[j]
+				if c[1] == WEAPON_COND then
+					changed = true
+					if c[2] == COND_EQ then
+						keep = false
+						break
+					elseif c[2] == COND_NEG then
+						if new_checks == checks then
+							new_checks = {}
+							for k = 1, j - 1 do new_checks[#new_checks+1] = checks[k] end
+						end
+					end
+				elseif new_checks ~= checks then
+					new_checks[#new_checks+1] = c
+				end
+			end
+		end
+		if keep then
+			if new_checks ~= checks and #new_checks == 0 then new_checks = nil end
+			out[#out+1] = (new_checks == checks) and cond or { cond[1], new_checks, cond[3] }
+		end
+	end
+	if not changed then
+		filtered_of[list] = false
+		return nil
+	end
+	filtered_of[list] = out
+	original_of[out] = list
+	return out
+end
+
+-- Puts the original or the filtered condlists into one NPC's meet storage, per the option.
+local function apply_meet(st, rec)
+	for field, orig in pairs(rec) do
+		local v = orig
+		if NO_WEAPON_REACTION then
+			v = filtered_of[orig] or orig
+		end
+		st[field] = v
+	end
+end
+
+-- After xr_meet.init_meet: remember which fields hold a weapon check from the default meet.
+local function record_meet(ini, section, st)
+	local own_section = section and section ~= "nil" and ini and ini.section_exist and ini:section_exist(section)
+	local rec
+	for i = 1, #MEET_FIELDS do
+		local field = MEET_FIELDS[i]
+		local cur = st[field]
+		if type(cur) == "table" then
+			-- init_meet returns early when the section didn't change, leaving our filtered list in place
+			local orig = original_of[cur] or cur
+			if not (own_section and ini:line_exist(section, field)) and filter_condlist(orig) then
+				rec = rec or {}
+				rec[field] = orig
+			end
+		end
+	end
+	meet_records[st] = rec
+	if rec then apply_meet(st, rec) end
+end
+
+local function init_meet_wrapped(npc, ini, section, st, ...)
+	local r1, r2 = orig_init_meet(npc, ini, section, st, ...)
+	if type(st) == "table" and section ~= "no_meet" then
+		record_meet(ini, section, st)
+	end
+	return r1, r2
+end
+
+local function install_meet_hook()
+	if orig_init_meet then return end   -- already installed in this session
+	local xm = xr_meet
+	local f = xm and xm.init_meet
+	if type(f) ~= "function" then
+		printf("%s xr_meet.init_meet not found, the raised-weapon option is off", TAG)
+		return
+	end
+	orig_init_meet = f
+	xm.init_meet = init_meet_wrapped
+end
+
+-- Re-applies the option to every online NPC (only when it is changed in MCM).
+local function apply_all_meets()
+	local n = 0
+	for _, s in pairs(db.storage) do
+		local st = s.meet
+		local rec = st and meet_records[st]
+		if rec then
+			apply_meet(st, rec)
+			n = n + 1
+		end
+	end
+	dbg("raised-weapon reaction %s for %d online stalkers", NO_WEAPON_REACTION and "off" or "on", n)
+end
+
+local function on_option_change()
+	local was = NO_WEAPON_REACTION
+	load_settings()
+	if was ~= NO_WEAPON_REACTION then
+		apply_all_meets()
+	end
 end
 
 ---------------------------------------------------------------------------------------------------
 -- Walking past: filter for xr_sound.set_sound_play
 ---------------------------------------------------------------------------------------------------
-local function set_sound_play_filtered(npc_id, sound, ...)
-	if sound and ((MUTE_HELLO and HELLO_THEMES[sound]) or (MUTE_WARNINGS and WARNING_THEMES[sound])) then
-		dbg("muted walking-past sound %s (npc %s)", sound, tostring(npc_id))
+local DEBUG_RADIUS_SQR = 20 * 20   -- debug only: log the voice lines of stalkers this close to the actor
+
+-- Debug only: name every voice line a nearby stalker starts, so a line that is not muted yet can be
+-- found in the log by its theme name (and added to HELLO_THEMES).
+local function log_played(npc_id, sound)
+	if npc_id == AC_ID then return end
+	local actor = db.actor
+	local st = npc_id and db.storage[npc_id]
+	local npc = st and st.object
+	if not (actor and npc) then return end
+	if npc:position():distance_to_sqr(actor:position()) > DEBUG_RADIUS_SQR then return end
+	printf("%s npc %s (%s) plays sound %s", TAG, tostring(npc_id), npc:name(), tostring(sound))
+end
+
+-- Plays a ONCE_THEMES line if this NPC has not said it yet this level visit.
+local function play_once(npc_id, sound, ...)
+	local played = npc_id and once_played[npc_id]
+	if played and played[sound] then
+		dbg("muted once-per-visit sound %s (npc %s), already played", sound, tostring(npc_id))
 		return nil
+	end
+	if DEBUG then
+		log_played(npc_id, sound)
+	end
+	local r1, r2 = orig_set_sound_play(npc_id, sound, ...)
+	-- count it only when the line really started (set_sound_play may refuse while he says another line)
+	local st = xr_sound.sound_table
+	local themes = sound_theme and sound_theme.theme
+	if npc_id and st and themes and st[npc_id] ~= nil and st[npc_id] == themes[sound] then
+		if not played then
+			played = {}
+			once_played[npc_id] = played
+		end
+		played[sound] = true
+		dbg("once-per-visit sound %s played (npc %s)", sound, tostring(npc_id))
+	end
+	return r1, r2
+end
+
+local function set_sound_play_filtered(npc_id, sound, ...)
+	if sound then
+		if (MUTE_HELLO and HELLO_THEMES[sound]) or (MUTE_WARNINGS and WARNING_THEMES[sound]) then
+			dbg("muted walking-past sound %s (npc %s)", sound, tostring(npc_id))
+			return nil
+		end
+		if MUTE_HELLO and ONCE_THEMES[sound] then
+			return play_once(npc_id, sound, ...)
+		end
+	end
+	if DEBUG then
+		log_played(npc_id, sound)
 	end
 	return orig_set_sound_play(npc_id, sound, ...)
 end
@@ -159,10 +369,40 @@ local function greet(npc_id)
 	dbg("npc %s (%s) greets", npc_id, npc:name())
 end
 
+-- The NPC the actor is talking to. pda.actor_menu_mode(10) fills used_npc_id with the first NPC in
+-- db.storage whose is_talking() is true, which is not always the one in the dialog, so the engine's
+-- talk partner comes first.
+local function dialog_npc_id()
+	local actor = db.actor
+	if actor then
+		if get_talking_npc_ok == nil then
+			local ok, f = pcall(function(a) return a.get_talking_npc end, actor)
+			get_talking_npc_ok = (ok and type(f) == "function") and true or false
+			if not get_talking_npc_ok then
+				printf("%s actor:get_talking_npc() not available, using used_npc_id", TAG)
+			end
+		end
+		if get_talking_npc_ok then
+			local npc = actor:get_talking_npc()
+			local id = npc and npc:id()
+			if id and id ~= AC_ID then
+				local ev = GetEvent and GetEvent("used_npc_id")
+				if ev ~= id then
+					dbg("used_npc_id %s is not the dialog partner %s", tostring(ev), id)
+				end
+				return id
+			end
+		end
+	end
+	local id = GetEvent and GetEvent("used_npc_id")
+	if type(id) == "number" then return id end
+	return nil
+end
+
 local function on_gui_show(name)
 	if name ~= "Dialog" or not ENABLED then return end
-	local id = GetEvent and GetEvent("used_npc_id")
-	if type(id) ~= "number" then
+	local id = dialog_npc_id()
+	if not id then
 		dbg("dialog opened, no NPC id")
 		return
 	end
@@ -174,6 +414,7 @@ end
 ---------------------------------------------------------------------------------------------------
 local function reset_state()
 	last_greet = {}
+	once_played = {}
 end
 
 local function on_first_update()
@@ -184,8 +425,9 @@ end
 function on_game_start()
 	load_settings()
 	install_filter()
+	install_meet_hook()
 	RegisterScriptCallback("GUI_on_show", on_gui_show)
 	RegisterScriptCallback("actor_on_first_update", on_first_update)
 	RegisterScriptCallback("actor_on_net_destroy", reset_state)
-	RegisterScriptCallback("on_option_change", load_settings)
+	RegisterScriptCallback("on_option_change", on_option_change)
 end
