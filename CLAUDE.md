@@ -91,5 +91,7 @@ In `mod.json`, both readme titles + history, script header, both MCM text files 
   and Garik silent with mute on, vanilla with mute off; debug lines appear).
 - 1.0.3 + 1.0.4 (2026-11-17): Expand tested 1.0.4 in game ("works as far as I can tell"); released together as
   v1.0.4 (1.0.1-1.0.3 never got their own tag/release; last release before was v1.0.0).
+- 1.0.5 (2026-11-17): greeting provider API for Monolith Voice Greetings; Expand tested the build in game,
+  released as v1.0.5 together with Monolith Voice Greetings v0.1.0.
 - Possible: does the NPC's greeting overlap with the first line of a story dialog that plays its own voice?
 - GitHub: `expand0501/dialog-greetings` (public). Discord descriptions: `docs/discord_en.md`, `docs/discord_ru.md`.
