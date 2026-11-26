@@ -1,4 +1,4 @@
-Dialog Greetings 1.0.5 by Expand
+Dialog Greetings 1.0.6 by Expand
 Stalkers greet you when you start talking to them - not every time you walk past.
 For S.T.A.L.K.E.R. Anomaly / G.A.M.M.A.
 
@@ -58,6 +58,8 @@ No per-frame work: one check when a dialog opens and one table lookup when a sta
 starts a voice line.
 
 VERSION HISTORY
+1.0.6 - Fixed a script error when the Rostok informant's once-per-visit line was
+        requested while he was saying another line.
 1.0.5 - Other mods can now give a stalker a different dialog greeting line (used by
         Monolith Voice Greetings). Nothing changes without such a mod.
 1.0.4 - New MCM option "No reaction to a raised weapon" (off by default): stalkers don't

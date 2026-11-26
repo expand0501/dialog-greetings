@@ -1,4 +1,4 @@
--- Dialog Greetings 1.0.5 by Expand
+-- Dialog Greetings 1.0.6 by Expand
 -- Stalkers say their greeting line when you open a dialog with them, and (MCM) no longer greet you
 -- when you just walk past them.
 --
@@ -271,10 +271,12 @@ local function play_once(npc_id, sound, ...)
 		log_played(npc_id, sound)
 	end
 	local r1, r2 = orig_set_sound_play(npc_id, sound, ...)
-	-- count it only when the line really started (set_sound_play may refuse while he says another line)
+	-- count it only when the line really started (set_sound_play may refuse while he says another line).
+	-- rawequal: sound themes are luabind objects without an == operator; == on two different ones throws.
 	local st = xr_sound.sound_table
 	local themes = sound_theme and sound_theme.theme
-	if npc_id and st and themes and st[npc_id] ~= nil and st[npc_id] == themes[sound] then
+	local cur = npc_id and st and st[npc_id]
+	if cur ~= nil and themes and rawequal(cur, themes[sound]) then
 		if not played then
 			played = {}
 			once_played[npc_id] = played

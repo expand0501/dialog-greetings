@@ -1,5 +1,10 @@
 # Changelog - Dialog Greetings by Expand
 
+- 1.0.6: fixed a Lua error in the once-per-visit check (`play_once`): it compared `xr_sound.sound_table[id]` with the
+  theme by `==`, and luabind `npc_sound` objects have no `==` operator, so asking for a `ONCE_THEMES` line while the NPC
+  was saying another line threw `No such operator [__eq] defined in class [npc_sound]` into the caller (xr_meet). Now
+  `rawequal`. Found by the automatic test suite (`run.ps1 -Suite dg`, 2026-11-26); full suite on 1.0.6: 18 of 18
+  scenarios PASS, no Lua errors.
 - 1.0.5: public API for other mods: `dlg_greet.add_greeting_provider(fn)` (fn(npc, npc_id) returns a sound theme
   the NPC plays as his dialog greeting instead of `dlg_greet_hello`; all our checks run first) and
   `dlg_greet.walk_hello_muted()`. Used by Monolith Voice Greetings, so Monolith stalkers (silent greeting files)

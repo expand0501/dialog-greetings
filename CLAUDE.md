@@ -95,3 +95,21 @@ In `mod.json`, both readme titles + history, script header, both MCM text files 
   released as v1.0.5 together with Monolith Voice Greetings v0.1.0.
 - Possible: does the NPC's greeting overlap with the first line of a story dialog that plays its own voice?
 - GitHub: `expand0501/dialog-greetings` (public). Discord descriptions: `docs/discord_en.md`, `docs/discord_ru.md`.
+- Automatic test suite 2026-11-26 (`run.ps1 -Suite dg`, plan `tests.md`; profile `Claude Test`, save `claude_test`,
+  installed zip 1.0.5; runs `20261126-151342`, `-151509`, `-152147`): all 18 scenarios run, 17 PASS, 1 FAIL, 0 Lua errors
+  from the mod in normal play. Run automatically, not tested by Expand.
+  - **Bug, verified** (traceback): `play_once` (dlg_greet.script:277) compares `st[npc_id] == themes[sound]`; luabind
+    `npc_sound` objects have no `==` operator, so when the NPC is already saying another line (sound_table holds another
+    theme) a ONCE_THEMES line throws `No such operator [__eq] defined in class [npc_sound]` up through
+    `xr_sound.set_sound_play` into the caller (xr_meet). Only with mute_hello on and only for the Rostok informant's line.
+    What the engine does with that error in normal play (log only or crash) = unknown. Fix: `rawequal(st[npc_id], themes[sound])`.
+  - Runner findings (not mod bugs): Expand's own MCM has mute_hello/mute_warnings off, companions on, cooldown 10;
+    the suite now sets every option to its default in memory.
+  - Not automated: how the greeting sounds / subtitles, story NPCs at their place, traders without voices.
+- 1.0.6 (2026-11-26): `play_once` uses `rawequal` (the bug above). Built `dist\current\Dialog_Greetings_by_Expand_1.0.6.zip`,
+  not released. Rerun `20261126-153559` (files copied into the `Claude Autotest` MO2 mod, which wins over the installed 1.0.5
+  in `Claude Test`): basics, walk_mute, walk_vanilla PASS; `once_other_line` passes in the same state that failed before
+  (sound_table held `dlg_greet_hello`).
+  Full regression 2026-11-26 on 1.0.6 (profile `Claude Test`, save `claude_test`, runs `20261126-223601` + `-224013`, version
+  checks read 1.0.6 from script and both text files): 18 of 18 PASS, 0 FAIL, 0 UNCLEAR, 0 Lua errors, 0 FATAL; `axr_options.ltx`
+  md5 unchanged. Run automatically; Expand asked for this run instead of a manual check, then released v1.0.6.
